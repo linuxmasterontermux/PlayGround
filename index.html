@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#77d4ff">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Flappy Drift">
+  <meta name="description" content="Flappy Drift — a one-tap flight game for phone and tablet with optional tilt controls.">
+  <title>Flappy Drift</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='30' cy='30' r='23' fill='%23ffd447' stroke='%235c3a0e' stroke-width='3'/%3E%3Ccircle cx='39' cy='23' r='9' fill='%23fff' stroke='%235c3a0e' stroke-width='2.5'/%3E%3Ccircle cx='41' cy='23' r='4' fill='%23233b55'/%3E%3Cpath d='M48 28l14 4-14 6z' fill='%23ff8a2a' stroke='%235c3a0e' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M11 34l-9-7 3 12-5 6 11 1z' fill='%23ef5b4c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <canvas id="game" aria-label="Flappy Drift play area. Tap to flap."></canvas>
+
+    <header class="hud" id="hud" aria-hidden="true">
+      <button class="icon-btn hud__pause" id="pauseBtn" type="button" aria-label="Pause game">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4.5" height="16" rx="2.2" fill="currentColor"/><rect x="13.5" y="4" width="4.5" height="16" rx="2.2" fill="currentColor"/></svg>
+      </button>
+
+      <div class="hud__score">
+        <span class="score" id="score">0</span>
+        <span class="tilt-chip" id="tiltChip" hidden><span class="tilt-chip__dot"></span>Tilt</span>
+      </div>
+
+      <button class="icon-btn hud__sound" id="soundBtn" type="button" aria-label="Mute sound" aria-pressed="false">
+        <svg class="icon-sound" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5h3.2L12 5.4v13.2L7.2 14.5H4z" fill="currentColor"/>
+          <path class="sound-wave" d="M15.4 8.6a4.8 4.8 0 0 1 0 6.8M18.2 5.8a8.8 8.8 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg class="icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5h3.2L12 5.4v13.2L7.2 14.5H4z" fill="currentColor"/>
+          <path d="M15.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <section class="screen screen--menu is-visible" id="menuScreen" aria-label="Main menu">
+      <div class="menu-top">
+        <div class="eyebrow">One tap &middot; Endless sky</div>
+        <h1 class="title"><span>Flappy</span><span class="title__accent">Drift</span></h1>
+        <p class="tagline">Thread the pipes. Chase the horizon.</p>
+        <div class="best-pill" id="menuBest" hidden>Best <strong>0</strong></div>
+      </div>
+
+      <div class="menu-card">
+        <button class="btn btn--play" id="playBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .9 1 1.4 1.7.9l10-6.8a1.1 1.1 0 0 0 0-1.8l-10-6.8c-.7-.5-1.7 0-1.7.9z" fill="currentColor"/></svg>
+          Play
+        </button>
+
+        <div class="settings">
+          <button class="toggle-row" id="soundToggle" type="button" role="switch" aria-checked="true">
+            <span class="toggle-row__icon" aria-hidden="true">
+              <svg class="icon-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.4v13.2L7.2 14.5H4z" fill="currentColor"/><path class="sound-wave" d="M15.4 8.6a4.8 4.8 0 0 1 0 6.8M18.2 5.8a8.8 8.8 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <span class="toggle-row__label">Sound<small>Chimes and flutters</small></span>
+            <span class="toggle-row__state">On</span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+
+          <button class="toggle-row" id="tiltToggle" type="button" role="switch" aria-checked="false">
+            <span class="toggle-row__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 18.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.2 7.5c.9-1 2.7-1 3.6 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            <span class="toggle-row__label">Tilt controls<small>Tilt back to climb</small></span>
+            <span class="toggle-row__state">Off</span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <p class="hint"><span class="hint__hand" aria-hidden="true"></span>Tap anywhere to flap</p>
+      </div>
+    </section>
+
+    <section class="screen screen--modal" id="pauseScreen" aria-label="Paused" aria-hidden="true">
+      <div class="panel">
+        <div class="panel__eyebrow">Take a breath</div>
+        <h2 class="panel__title">Paused</h2>
+        <p class="panel__copy">The sky can wait.</p>
+
+        <button class="btn btn--play" id="resumeBtn" type="button">Resume</button>
+        <div class="btn-row">
+          <button class="btn btn--ghost" id="restartBtn" type="button">Restart</button>
+          <button class="btn btn--ghost" id="pauseMenuBtn" type="button">Menu</button>
+        </div>
+
+        <div class="settings settings--compact">
+          <button class="toggle-row" id="pauseSoundToggle" type="button" role="switch" aria-checked="true">
+            <span class="toggle-row__label">Sound</span>
+            <span class="toggle-row__state">On</span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+          <button class="toggle-row" id="pauseTiltToggle" type="button" role="switch" aria-checked="false">
+            <span class="toggle-row__label">Tilt controls</span>
+            <span class="toggle-row__state">Off</span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+          <button class="toggle-row toggle-row--sub" id="invertTiltToggle" type="button" role="switch" aria-checked="false" hidden>
+            <span class="toggle-row__label">Invert tilt</span>
+            <span class="toggle-row__state">Off</span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <button class="text-btn" id="recenterBtn" type="button" hidden>Recenter tilt</button>
+      </div>
+    </section>
+
+    <section class="screen screen--modal" id="overScreen" aria-label="Game over" aria-hidden="true">
+      <div class="panel panel--result">
+        <div class="panel__eyebrow">Run complete</div>
+        <h2 class="panel__title">Game over</h2>
+
+        <div class="result-row">
+          <div class="stat">
+            <span class="stat__label">Score</span>
+            <strong class="stat__value" id="finalScore">0</strong>
+          </div>
+          <div class="medal" id="medal">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.2l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z" fill="currentColor"/></svg>
+            <span id="medalLabel">Rookie</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Best</span>
+            <strong class="stat__value" id="finalBest">0</strong>
+          </div>
+        </div>
+
+        <div class="new-best" id="newBest" hidden>New best flight</div>
+
+        <button class="btn btn--play" id="retryBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .9 1 1.4 1.7.9l10-6.8a1.1 1.1 0 0 0 0-1.8l-10-6.8c-.7-.5-1.7 0-1.7.9z" fill="currentColor"/></svg>
+          Play again
+        </button>
+        <button class="btn btn--ghost" id="menuBtn" type="button">Back to menu</button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <p class="sr-only" id="liveRegion" aria-live="polite"></p>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
