@@ -244,6 +244,19 @@ export function createFloorTexture() {
   return finish(canvas, { repeat: [1, 1] });
 }
 
+/** Soft radial highlight used on the mask lenses and eye catchlights. */
+export function createGlintTexture() {
+  const S = 128;
+  const { canvas, ctx } = canvas2d(S);
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+  g.addColorStop(0.35, 'rgba(255, 255, 255, 0.5)');
+  g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  return finish(canvas, { repeat: [1, 1] });
+}
+
 /** Soft radial contact shadow used under the feet. */
 export function createShadowTexture() {
   const S = 512;
@@ -275,7 +288,7 @@ export function createGlowTexture(color = '#e11d38') {
 export function createSkinTexture() {
   const S = 512;
   const { canvas, ctx } = canvas2d(S);
-  ctx.fillStyle = '#c98f6f';
+  ctx.fillStyle = '#d8a98b';
   ctx.fillRect(0, 0, S, S);
 
   const img = ctx.getImageData(0, 0, S, S);
@@ -288,9 +301,9 @@ export function createSkinTexture() {
   }
   ctx.putImageData(img, 0, 0);
 
-  ctx.globalAlpha = 0.12;
+  ctx.globalAlpha = 0.1;
   for (let i = 0; i < 240; i++) {
-    ctx.fillStyle = Math.random() > 0.5 ? '#9a5d47' : '#e5b190';
+    ctx.fillStyle = Math.random() > 0.5 ? '#a86a52' : '#edc3a7';
     const x = Math.random() * S;
     const y = Math.random() * S;
     ctx.fillRect(x, y, 1.5, 1.5);
@@ -299,17 +312,17 @@ export function createSkinTexture() {
   return finish(canvas, { repeat: [1, 1] });
 }
 
-/** Swept dark-brown hair strands. */
+/** Swept medium-brown hair strands. */
 export function createHairTexture() {
   const S = 512;
   const { canvas, ctx } = canvas2d(S);
-  ctx.fillStyle = '#2a1a13';
+  ctx.fillStyle = '#4b2e1c';
   ctx.fillRect(0, 0, S, S);
   ctx.lineWidth = 2;
   for (let i = 0; i < 900; i++) {
     const x = Math.random() * S;
     const y = Math.random() * S;
-    ctx.strokeStyle = Math.random() > 0.55 ? 'rgba(96, 63, 43, 0.35)' : 'rgba(10, 6, 4, 0.4)';
+    ctx.strokeStyle = Math.random() > 0.5 ? 'rgba(124, 86, 56, 0.4)' : 'rgba(30, 18, 9, 0.42)';
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.quadraticCurveTo(x + 8, y + 20, x + 2, y + 48);

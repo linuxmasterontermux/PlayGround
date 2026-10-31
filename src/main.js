@@ -195,6 +195,7 @@ function setSourceChip(live) {
   dom.demoBtn.setAttribute('aria-pressed', String(!live));
   dom.liveBtn.classList.toggle('is-active', live);
   dom.liveBtn.setAttribute('aria-pressed', String(live));
+  document.body.classList.toggle('is-live', live);
 }
 
 function setMask(masked, announce = false) {

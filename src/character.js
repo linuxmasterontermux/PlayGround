@@ -7,6 +7,7 @@ import {
   createEmblemTexture,
   createSkinTexture,
   createHairTexture,
+  createGlintTexture,
 } from './textures.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -166,17 +167,17 @@ export class SpiderCharacter {
       lensRim: new THREE.MeshStandardMaterial({ color: 0x050609, roughness: 0.3, metalness: 0.5 }),
       white: new THREE.MeshStandardMaterial({ color: 0xe9eef8, roughness: 0.3, metalness: 0.5 }),
       skin: new THREE.MeshStandardMaterial({
-        map: skinTex, color: 0xffffff, roughness: 0.62, metalness: 0.02, envMapIntensity: 0.35,
+        map: skinTex, color: 0xf4d8c7, roughness: 0.72, metalness: 0.0, envMapIntensity: 0.18,
       }),
       hair: new THREE.MeshStandardMaterial({
-        map: hairTex, color: 0x857064, roughness: 0.72, metalness: 0.05,
+        map: hairTex, color: 0xffffff, roughness: 0.82, metalness: 0.02,
       }),
-      eyeWhite: new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.24, metalness: 0.02 }),
-      iris: new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.28, metalness: 0.05 }),
-      pupil: new THREE.MeshStandardMaterial({ color: 0x08090c, roughness: 0.18, metalness: 0.05 }),
-      lip: new THREE.MeshStandardMaterial({ color: 0x9d5b52, roughness: 0.5, metalness: 0.02 }),
+      eyeWhite: new THREE.MeshStandardMaterial({ color: 0xf6f3ee, roughness: 0.22, metalness: 0.02 }),
+      iris: new THREE.MeshStandardMaterial({ color: 0x6f4a2c, roughness: 0.24, metalness: 0.04 }),
+      pupil: new THREE.MeshStandardMaterial({ color: 0x090a0d, roughness: 0.16, metalness: 0.05 }),
+      lip: new THREE.MeshStandardMaterial({ color: 0xa05a55, roughness: 0.46, metalness: 0.02 }),
       mouth: new THREE.MeshStandardMaterial({ color: 0x2b0e12, roughness: 0.8, metalness: 0 }),
-      brow: new THREE.MeshStandardMaterial({ color: 0x3a2419, roughness: 0.7, metalness: 0 }),
+      brow: new THREE.MeshStandardMaterial({ color: 0x4a2e1c, roughness: 0.72, metalness: 0 }),
       sole: new THREE.MeshStandardMaterial({ color: 0x0a0c12, roughness: 0.72, metalness: 0.1 }),
       emblem: new THREE.MeshStandardMaterial({
         map: createEmblemTexture(), transparent: true, alphaTest: 0.06,
@@ -425,6 +426,8 @@ export class SpiderCharacter {
     });
     rimGeo.center();
 
+    const glintTex = createGlintTexture();
+
     this.lensGroups = [];
     for (const side of [1, -1]) {
       const eye = new THREE.Group();
@@ -444,10 +447,13 @@ export class SpiderCharacter {
       eye.add(lens);
 
       const shine = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.028, 0.011),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }),
+        new THREE.PlaneGeometry(0.075, 0.04),
+        new THREE.MeshBasicMaterial({
+          map: glintTex, color: 0xffffff, transparent: true, opacity: 0.5,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+        }),
       );
-      shine.position.set(-0.018 * side, 0.025, 0.014);
+      shine.position.set(-0.02 * side, 0.026, 0.0145);
       shine.rotation.z = -0.32 * side;
       eye.add(shine);
 
@@ -468,32 +474,33 @@ export class SpiderCharacter {
     this.faceGroup.position.set(0, 0.085, 0);
     head.add(this.faceGroup);
 
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.111, 26, 22), M.skin);
-    skull.scale.set(0.9, 1.04, 0.95);
-    skull.position.y = 0.028;
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.112, 28, 22), M.skin);
+    skull.scale.set(0.92, 1.05, 0.96);
+    skull.position.y = 0.025;
     skull.castShadow = true;
     skull.receiveShadow = true;
     this.faceGroup.add(skull);
 
-    // Jaw / chin (animated on jaw open).
+    // Jaw / chin volume (animated on jaw open).
     const jawGroup = new THREE.Group();
-    jawGroup.position.set(0, -0.018, 0.01);
+    jawGroup.position.set(0, -0.018, 0.004);
     this.faceGroup.add(jawGroup);
     this.jawGroup = jawGroup;
-    const jaw = new THREE.Mesh(new RoundedBoxGeometry(0.118, 0.09, 0.128, 4, 0.036), M.skin);
-    jaw.position.set(0, -0.028, 0.012);
+    const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.072, 20, 14), M.skin);
+    jaw.scale.set(0.99, 0.63, 0.89);
+    jaw.position.set(0, -0.032, 0.016);
     jaw.castShadow = true;
     jawGroup.add(jaw);
-    const chin = new THREE.Mesh(new THREE.SphereGeometry(0.036, 14, 10), M.skin);
-    chin.scale.set(1.25, 0.8, 0.9);
-    chin.position.set(0, -0.055, 0.062);
+    const chin = new THREE.Mesh(new THREE.SphereGeometry(0.033, 16, 12), M.skin);
+    chin.scale.set(1.1, 0.72, 0.86);
+    chin.position.set(0, -0.07, 0.038);
     jawGroup.add(chin);
 
     // Ears.
     for (const side of [1, -1]) {
-      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 10), M.skin);
-      ear.scale.set(0.65, 1.1, 0.8);
-      ear.position.set(0.099 * side, 0.022, -0.004);
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 10), M.skin);
+      ear.scale.set(0.52, 0.92, 0.66);
+      ear.position.set(0.099 * side, 0.026, 0.0);
       this.faceGroup.add(ear);
     }
 
@@ -501,105 +508,145 @@ export class SpiderCharacter {
     this.eyes = [];
     for (const side of [1, -1]) {
       const eye = new THREE.Group();
-      eye.position.set(0.037 * side, 0.05, 0.087);
+      eye.position.set(0.036 * side, 0.047, 0.094);
       this.faceGroup.add(eye);
 
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.0205, 16, 12), M.eyeWhite);
-      white.scale.set(1.05, 0.82, 0.5);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.0195, 18, 14), M.eyeWhite);
+      white.scale.set(1.12, 0.8, 0.5);
       eye.add(white);
-      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 14, 10), M.iris);
-      iris.scale.set(1, 1, 0.36);
-      iris.position.set(0, 0.0, 0.018);
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.0098, 16, 12), M.iris);
+      iris.scale.set(1, 1, 0.34);
+      iris.position.set(0, -0.0005, 0.0086);
       eye.add(iris);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0046, 12, 8), M.pupil);
-      pupil.scale.set(1, 1, 0.3);
-      pupil.position.set(0, 0, 0.024);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0049, 12, 10), M.pupil);
+      pupil.scale.set(1, 1, 0.28);
+      pupil.position.set(0, -0.0005, 0.0116);
       eye.add(pupil);
-      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.42), M.skin);
-      lid.scale.set(1.06, 0.5, 0.55);
-      lid.position.set(0, 0.012, 0.004);
-      eye.add(lid);
+      const glint = new THREE.Mesh(
+        new THREE.SphereGeometry(0.0017, 6, 5),
+        new THREE.MeshBasicMaterial({ color: 0xffffff }),
+      );
+      glint.position.set(-0.0026, 0.0028, 0.0126);
+      eye.add(glint);
+      const lash = new THREE.Mesh(new RoundedBoxGeometry(0.0405, 0.0021, 0.0055, 2, 0.001), M.brow);
+      lash.position.set(0, 0.0138, 0.0098);
+      lash.rotation.z = 0.055 * side;
+      eye.add(lash);
 
-      this.eyes.push({ group: eye, lid, side });
+      this.eyes.push({ group: eye, side });
     }
 
     // Brows.
     this.brows = [];
     for (const side of [1, -1]) {
-      const brow = new THREE.Mesh(new RoundedBoxGeometry(0.038, 0.0065, 0.009, 2, 0.0025), M.brow);
-      brow.position.set(0.038 * side, 0.078, 0.088);
-      brow.rotation.z = 0.09 * side;
+      const brow = new THREE.Mesh(new RoundedBoxGeometry(0.039, 0.0055, 0.0075, 2, 0.0022), M.brow);
+      brow.position.set(0.036 * side, 0.0775, 0.0955);
+      brow.rotation.z = 0.12 * side;
+      brow.rotation.y = -0.1 * side;
       this.faceGroup.add(brow);
-      this.brows.push({ mesh: brow, side, baseY: 0.078 });
+      this.brows.push({ mesh: brow, side, baseY: 0.0775 });
     }
 
-    // Nose.
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 14, 10), M.skin);
-    nose.scale.set(0.85, 1.35, 1.1);
-    nose.position.set(0, 0.022, 0.098);
-    this.faceGroup.add(nose);
-    const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(0.006, 0.035, 2, 7), M.skin);
-    bridge.rotation.x = -0.16;
-    bridge.position.set(0, 0.042, 0.094);
+    // Nose: soft bridge blended into the brow, rounded tip.
+    const bridge = new THREE.Mesh(new THREE.SphereGeometry(0.011, 14, 12), M.skin);
+    bridge.scale.set(0.6, 1.9, 0.45);
+    bridge.position.set(0, 0.041, 0.0965);
     this.faceGroup.add(bridge);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.016, 16, 12), M.skin);
+    nose.scale.set(0.86, 1.15, 0.85);
+    nose.position.set(0, 0.0135, 0.102);
+    this.faceGroup.add(nose);
+    for (const side of [1, -1]) {
+      const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.003, 8, 6), M.mouth);
+      nostril.scale.set(1.1, 0.6, 0.45);
+      nostril.position.set(0.0085 * side, 0.0065, 0.109);
+      this.faceGroup.add(nostril);
+    }
 
     // Mouth.
     const mouthGroup = new THREE.Group();
-    mouthGroup.position.set(0, -0.025, 0.093);
+    mouthGroup.position.set(0, -0.037, 0.092);
     this.faceGroup.add(mouthGroup);
     this.mouthGroup = mouthGroup;
 
-    const cavity = new THREE.Mesh(new THREE.SphereGeometry(0.029, 14, 10), M.mouth);
-    cavity.scale.set(1, 0.28, 0.35);
+    const cavity = new THREE.Mesh(new THREE.SphereGeometry(0.024, 16, 10), M.mouth);
+    cavity.scale.set(1.08, 0.2, 0.24);
     mouthGroup.add(cavity);
     this.mouthCavity = cavity;
 
-    const upperLip = new THREE.Mesh(new THREE.CapsuleGeometry(0.0045, 0.036, 2, 8), M.lip);
+    const upperLip = new THREE.Mesh(new THREE.CapsuleGeometry(0.004, 0.039, 2, 10), M.lip);
     upperLip.rotation.z = Math.PI / 2;
-    upperLip.position.set(0, 0.006, 0.008);
+    upperLip.position.set(0, 0.0062, 0.0055);
     mouthGroup.add(upperLip);
-    const lowerLip = new THREE.Mesh(new THREE.CapsuleGeometry(0.0055, 0.03, 2, 8), M.lip);
+    const lowerLip = new THREE.Mesh(new THREE.CapsuleGeometry(0.005, 0.034, 2, 10), M.lip);
     lowerLip.rotation.z = Math.PI / 2;
-    lowerLip.position.set(0, -0.007, 0.008);
+    lowerLip.position.set(0, -0.0062, 0.0065);
     mouthGroup.add(lowerLip);
     this.lowerLip = lowerLip;
 
+    this.mouthCorners = [];
     for (const side of [1, -1]) {
-      const corner = new THREE.Mesh(new THREE.SphereGeometry(0.005, 8, 6), M.lip);
-      corner.position.set(0.022 * side, 0.0, 0.007);
+      const corner = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), M.lip);
+      corner.position.set(0.0235 * side, 0.0, 0.0045);
       mouthGroup.add(corner);
+      this.mouthCorners.push({ mesh: corner, side, baseY: 0 });
     }
 
-    // Hair: cap + swept fringe.
+    // Hair: skull cap, rear volume, swept fringe and temples.
     const hairCap = new THREE.Mesh(
-      new THREE.SphereGeometry(0.116, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.58),
+      new THREE.SphereGeometry(0.117, 28, 18, 0, Math.PI * 2, 0, Math.PI * 0.31),
       M.hair,
     );
-    hairCap.scale.set(0.94, 1.06, 0.98);
-    hairCap.position.set(0, 0.034, -0.003);
-    hairCap.rotation.x = -0.06;
+    hairCap.scale.set(0.96, 1.04, 1.0);
+    hairCap.position.set(0, 0.034, -0.002);
+    hairCap.rotation.x = -0.05;
     hairCap.castShadow = true;
     this.faceGroup.add(hairCap);
 
-    const fringeData = [
-      [0.0, 0.108, 0.085, 0.05, 0.018, 0.022, 0.0, 0.35],
-      [0.045, 0.103, 0.075, 0.045, 0.016, 0.02, -0.3, 0.25],
-      [-0.043, 0.105, 0.078, 0.04, 0.016, 0.02, 0.35, -0.2],
-      [0.075, 0.085, 0.035, 0.035, 0.02, 0.025, -0.5, 0.4],
-      [-0.075, 0.087, 0.038, 0.032, 0.019, 0.024, 0.5, -0.35],
-    ];
-    for (const [x, y, z, sx, sy, sz, ry, rz] of fringeData) {
-      const strand = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M.hair);
-      strand.scale.set(sx, sy, sz);
-      strand.position.set(x, y, z);
-      strand.rotation.set(0.2, ry, rz);
-      strand.castShadow = true;
-      this.faceGroup.add(strand);
+    const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.116, 24, 18), M.hair);
+    hairBack.scale.set(0.99, 1.01, 0.9);
+    hairBack.position.set(0, 0.024, -0.045);
+    hairBack.castShadow = true;
+    this.faceGroup.add(hairBack);
+
+    // Fringe: a shell segment hugging the skull so the hairline reads clean.
+    const fringe = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1185, 30, 8, Math.PI * 0.16, Math.PI * 0.68, Math.PI * 0.29, Math.PI * 0.075),
+      M.hair,
+    );
+    fringe.scale.copy(hairCap.scale);
+    fringe.position.copy(hairCap.position);
+    fringe.rotation.set(-0.05, 0.02, 0.05);
+    fringe.castShadow = true;
+    this.faceGroup.add(fringe);
+
+    // A small swept lock breaks the hairline above the right brow.
+    const lock = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), M.hair);
+    lock.scale.set(0.036, 0.014, 0.028);
+    lock.position.set(0.048, 0.096, 0.077);
+    lock.rotation.set(0.2, -0.25, -0.34);
+    this.faceGroup.add(lock);
+    // Temple hair blending into the hair cap.
+    for (const side of [1, -1]) {
+      const temple = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), M.hair);
+      temple.scale.set(0.023, 0.042, 0.05);
+      temple.position.set(0.089 * side, 0.062, 0.004);
+      temple.rotation.z = -0.14 * side;
+      temple.castShadow = true;
+      this.faceGroup.add(temple);
+    }
+    // Sideburns.
+    for (const side of [1, -1]) {
+      const burn = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M.hair);
+      burn.scale.set(0.012, 0.028, 0.019);
+      burn.position.set(0.0935 * side, 0.034, 0.024);
+      this.faceGroup.add(burn);
     }
 
     // Neck skin, only visible unmasked.
-    const neckSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.054, 0.1, 12), M.skin);
-    neckSkin.position.set(0, -0.078, 0);
+    const neckSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.047, 0.05, 14), M.skin);
+    neckSkin.position.set(0, -0.128, 0);
+    this.faceGroup.add(neckSkin);
     this.faceGroup.add(neckSkin);
   }
 
@@ -848,28 +895,30 @@ export class SpiderCharacter {
 
     if (!this.faceGroup.visible) return;
 
-    // Blink.
+    // Blink: squash the eye group vertically (keeps irises in place).
     for (const eye of this.eyes) {
       const blink = eye.side > 0 ? f.blinkL : f.blinkR;
-      const target = THREE.MathUtils.lerp(1, 0.08, THREE.MathUtils.clamp(blink * 1.15, 0, 1));
+      const target = THREE.MathUtils.lerp(1, 0.06, THREE.MathUtils.clamp(blink * 1.15, 0, 1));
       eye.group.scale.y += (target - eye.group.scale.y) * Math.min(1, dt * 22);
-      eye.lid.position.y = 0.012 - blink * 0.012;
     }
 
     // Jaw.
     const jaw = THREE.MathUtils.clamp(f.jaw, 0, 1);
-    const jawTarget = -jaw * 0.022;
-    this.jawGroup.position.y += ((-0.018 + jawTarget) - this.jawGroup.position.y) * Math.min(1, dt * 20);
-    this.mouthCavity.scale.y = 0.28 + jaw * 2.5;
+    const jawTarget = -0.018 - jaw * 0.02;
+    this.jawGroup.position.y += (jawTarget - this.jawGroup.position.y) * Math.min(1, dt * 20);
+    this.mouthCavity.scale.y = 0.2 + jaw * 1.6;
     this.mouthCavity.scale.x = 1 + f.smile * 0.16;
-    this.lowerLip.position.y = -0.007 - jaw * 0.012;
+    this.lowerLip.position.y = -0.0065 - jaw * 0.011;
     this.lowerLip.rotation.z = Math.PI / 2 + f.smile * 0.015;
 
     // Smile + brows.
+    for (const corner of this.mouthCorners) {
+      corner.mesh.position.y = corner.baseY + f.smile * 0.007;
+    }
     for (const brow of this.brows) {
       const raise = f.brow * 0.011 + (f.smile * 0.004);
       brow.mesh.position.y = brow.baseY + raise - (brow.side > 0 ? f.blinkL : f.blinkR) * 0.002;
-      brow.mesh.rotation.z = 0.09 * brow.side + f.smile * 0.03 * brow.side;
+      brow.mesh.rotation.z = 0.1 * brow.side + f.smile * 0.03 * brow.side;
     }
 
     // Subtle cheek/jaw expression can be extended here.

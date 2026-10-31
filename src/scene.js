@@ -93,6 +93,13 @@ export class Stage {
     fill.position.set(-1.2, 1.9, 2.9);
     this.scene.add(fill);
 
+    // Soft neutral front bounce so skin reads as skin, not stage gel.
+    const faceFill = new THREE.DirectionalLight(0xfff4ea, 0.85);
+    faceFill.position.set(-2.2, 2.4, 3.4);
+    faceFill.target.position.set(0, 1.4, 0);
+    this.scene.add(faceFill, faceFill.target);
+    this.faceFill = faceFill;
+
     const rimBlue = new THREE.SpotLight(0x3f7dff, 85, 8, 0.7, 0.55, 1.6);
     rimBlue.position.set(-2.7, 2.6, -1.2);
     rimBlue.target.position.set(0, 1.2, 0);
