@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070c" />
+    <meta name="description" content="SpiderTrack — real-time full-body and face motion capture in 3D. On-device, private, and built for 60 fps." />
+    <title>SpiderTrack — Full-Body + Face Motion Capture</title>
+    <script type="module" crossorigin src="./assets/index-iNa8Vl77.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DaRIhTk-.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="3D motion capture viewport"></canvas>
+      <div class="atmosphere" aria-hidden="true">
+        <div class="vignette"></div>
+        <div class="scanlines"></div>
+        <div class="grain"></div>
+        <div class="web-corner web-corner--tl"></div>
+        <div class="web-corner web-corner--br"></div>
+      </div>
+
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="SpiderTrack home">
+          <span class="brand__mark" id="brandMark" aria-hidden="true"></span>
+          <span class="brand__text">
+            <span class="eyebrow">Parker Industries · Motion Lab</span>
+            <span class="wordmark">SPIDER<span>TRACK</span></span>
+          </span>
+        </a>
+
+        <div class="topbar__right">
+          <div class="status-cluster" role="status" aria-live="polite">
+            <span class="chip chip--live" id="sourceChip"><i></i><span id="sourceLabel">DEMO SIGNAL</span></span>
+            <span class="chip chip--ghost" id="modelChip"><i></i><span id="modelLabel">AI STANDBY</span></span>
+          </div>
+          <button class="btn btn--primary btn--camera" id="cameraBtn" type="button">
+            <span class="btn__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-2h5.6L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.4"/></svg>
+            </span>
+            <span class="btn__label"><strong>Enable camera</strong><small>Start real-time capture</small></span>
+          </button>
+        </div>
+      </header>
+
+      <aside class="panel panel--left" aria-label="Camera input and capture controls">
+        <section class="card camera-card">
+          <div class="card__head">
+            <span class="label">CAM 01 / INPUT</span>
+            <span class="mini-status" id="camStatus"><i></i>DEMO</span>
+          </div>
+          <div class="camera-feed" id="cameraFeed">
+            <video id="video" playsinline muted></video>
+            <canvas id="overlay" width="640" height="360" aria-label="Tracking landmark overlay"></canvas>
+            <div class="camera-feed__grid" aria-hidden="true"></div>
+            <div class="camera-feed__sweep" aria-hidden="true"></div>
+            <div class="camera-feed__corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <div class="camera-feed__badge" id="feedBadge">SYNTHETIC TARGET</div>
+            <div class="camera-feed__empty" id="feedEmpty">
+              <span class="feed-empty__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H7l1.1-2h7.8L17 6h1.5A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-9Z"/><path d="m4 20 16-16"/></svg>
+              </span>
+              <strong>CAMERA OFFLINE</strong>
+              <span>Demo motion is driving the suit</span>
+            </div>
+          </div>
+          <div class="camera-meta">
+            <span><em>FEED</em> <b id="feedRes">—</b></span>
+            <span><em>INFER</em> <b id="feedMs">— ms</b></span>
+            <span><em>RATE</em> <b id="feedHz">— Hz</b></span>
+          </div>
+        </section>
+
+        <section class="card control-card">
+          <div class="card__head"><span class="label">CAPTURE MATRIX</span><span class="label label--dim" id="engineLabel">WEBGL 2</span></div>
+          <div class="control-row">
+            <span class="control-row__label">Suit skin<small>Peter Parker · Mk I</small></span>
+            <div class="segmented" role="group" aria-label="Suit visibility">
+              <button type="button" class="seg is-on" data-mask="1">Masked</button>
+              <button type="button" class="seg" data-mask="0">Unmasked</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-row__label">Tracking layers<small>Body + face · 33 + 478 pts</small></span>
+            <div class="toggle-set">
+              <button class="toggle is-on" id="bodyToggle" type="button" aria-pressed="true"><i></i>BODY</button>
+              <button class="toggle is-on" id="faceToggle" type="button" aria-pressed="true"><i></i>FACE</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-row__label">Skeleton overlay<small>Projected landmarks</small></span>
+            <button class="switch is-on" id="skeletonToggle" type="button" role="switch" aria-checked="true" aria-label="Skeleton overlay"><i></i></button>
+          </div>
+          <div class="control-row">
+            <span class="control-row__label">Mirror input<small>Selfie framing</small></span>
+            <button class="switch is-on" id="mirrorToggle" type="button" role="switch" aria-checked="true" aria-label="Mirror input"><i></i></button>
+          </div>
+          <div class="control-row">
+            <span class="control-row__label">Render quality<small id="qualityHint">Adaptive · 60 fps</small></span>
+            <div class="select-wrap">
+              <select id="qualitySelect" aria-label="Render quality">
+                <option value="auto" selected>Auto</option>
+                <option value="high">High</option>
+                <option value="balanced">Balanced</option>
+                <option value="battery">Battery</option>
+              </select>
+            </div>
+          </div>
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>All inference runs on-device. No frames leave this browser.</span>
+          </div>
+        </section>
+      </aside>
+
+      <aside class="panel panel--right" aria-label="Live tracking telemetry">
+        <section class="card telemetry-card">
+          <div class="card__head"><span class="label">HEAD VECTOR</span><span class="telemetry-live"><i></i>LIVE</span></div>
+          <div class="orientation">
+            <div class="orientation__ring" id="orientationRing">
+              <span class="orientation__horizon"></span>
+              <span class="orientation__reticle"></span>
+              <span class="orientation__value" id="yawValue">0°</span>
+              <span class="orientation__caption">YAW</span>
+            </div>
+            <div class="orientation__axes">
+              <div class="axis-row"><span>YAW</span><i><b id="yawBar"></b></i><em id="yawNum">0°</em></div>
+              <div class="axis-row"><span>PITCH</span><i><b id="pitchBar"></b></i><em id="pitchNum">0°</em></div>
+              <div class="axis-row"><span>ROLL</span><i><b id="rollBar"></b></i><em id="rollNum">0°</em></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card telemetry-card">
+          <div class="card__head"><span class="label">FACE CHANNELS</span><span class="label label--dim">52 blendshapes</span></div>
+          <div class="meter-list">
+            <div class="meter"><span>Jaw open</span><i><b id="jawBar"></b></i><em id="jawNum">0</em></div>
+            <div class="meter"><span>Blink L</span><i><b id="blinkLBar"></b></i><em id="blinkLNum">0</em></div>
+            <div class="meter"><span>Blink R</span><i><b id="blinkRBar"></b></i><em id="blinkRNum">0</em></div>
+            <div class="meter"><span>Smile</span><i><b id="smileBar"></b></i><em id="smileNum">0</em></div>
+            <div class="meter"><span>Brow raise</span><i><b id="browBar"></b></i><em id="browNum">0</em></div>
+          </div>
+        </section>
+
+        <section class="card telemetry-card">
+          <div class="card__head"><span class="label">BODY LOCK</span><span class="lock-value" id="bodyLockValue">98%</span></div>
+          <div class="body-lock">
+            <div class="joint-grid" id="jointGrid">
+              <span data-joint="head">HEAD</span><span data-joint="shoulders">SHLD</span>
+              <span data-joint="elbows">ELBW</span><span data-joint="wrists">WRST</span>
+              <span data-joint="hips">HIPS</span><span data-joint="knees">KNEE</span>
+              <span data-joint="ankles">ANKL</span><span data-joint="feet">FEET</span>
+            </div>
+            <div class="lock-track"><b id="lockBar"></b></div>
+          </div>
+        </section>
+
+        <section class="card telemetry-card telemetry-card--perf">
+          <div class="card__head"><span class="label">PERFORMANCE</span><span class="label label--dim" id="rendererLabel">WEBGL</span></div>
+          <div class="perf-grid">
+            <div><em>FPS</em><b id="fpsValue">60</b><span id="fpsDelta">stable</span></div>
+            <div><em>INFERENCE</em><b id="inferValue">0.0</b><span>ms / frame</span></div>
+            <div><em>TRACK HZ</em><b id="hzValue">30</b><span>adaptive</span></div>
+            <div><em>PIXEL RATIO</em><b id="dprValue">1.0</b><span id="resValue">—</span></div>
+          </div>
+          <div class="sparkline" id="sparkline" aria-hidden="true"></div>
+        </section>
+      </aside>
+
+      <div class="hero-caption">
+        <div class="hero-caption__rule"></div>
+        <span class="hero-caption__index">SUIT 01 / WEB-CLASS</span>
+        <h2>PETER PARKER</h2>
+        <p>Full-body &amp; facial capture · 33-body / 478-face landmarks · on-device</p>
+      </div>
+
+      <div class="stage-tools" aria-label="Stage view controls">
+        <button class="tool is-on" id="viewFull" type="button" aria-pressed="true"><span>FULL BODY</span></button>
+        <button class="tool" id="viewFace" type="button" aria-pressed="false"><span>FACE</span></button>
+        <button class="tool tool--icon" id="orbitToggle" type="button" aria-pressed="false" aria-label="Auto orbit camera" title="Auto orbit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+        </button>
+      </div>
+
+      <footer class="dock">
+        <div class="dock__group">
+          <button class="dock-btn is-active" id="demoBtn" type="button" aria-pressed="true">
+            <span class="dock-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 18V9m5 9V5m5 13v-7m5 7V7"/></svg></span>
+            <span><strong>Demo</strong><small>Choreographed</small></span>
+          </button>
+          <button class="dock-btn" id="liveBtn" type="button" aria-pressed="false">
+            <span class="dock-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></span>
+            <span><strong>Webcam</strong><small>Live capture</small></span>
+          </button>
+        </div>
+        <div class="dock__divider" aria-hidden="true"></div>
+        <div class="dock__group">
+          <button class="dock-btn" id="maskBtn" type="button" aria-pressed="true">
+            <span class="dock-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3c4 0 7 2.5 7 7 0 5-3 10-7 11-4-1-7-6-7-11 0-4.5 3-7 7-7Z"/><path d="M8.5 10c1-1 2.5-1.2 3.5-.4 1-.8 2.5-.6 3.5.4"/></svg></span>
+            <span><strong>Mask</strong><small id="maskState">On</small></span>
+          </button>
+          <button class="dock-btn" id="skeletonBtn" type="button" aria-pressed="false">
+            <span class="dock-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v6m0 0-4 6m4-6 4 6M6 11h12"/></svg></span>
+            <span><strong>Skeleton</strong><small>Landmarks</small></span>
+          </button>
+          <button class="dock-btn" id="snapshotBtn" type="button" aria-pressed="false">
+            <span class="dock-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-2h5.6L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></span>
+            <span><strong>Snapshot</strong><small>Save PNG</small></span>
+          </button>
+        </div>
+        <div class="dock__divider" aria-hidden="true"></div>
+        <div class="dock__status">
+          <span class="pulse-dot"></span>
+          <div><strong id="dockStatusTitle">SYNTHETIC FEED</strong><small id="dockStatusSub">60 fps · 0 dropped frames</small></div>
+        </div>
+      </footer>
+
+      <div class="toast" id="toast" role="status" aria-live="polite">
+        <span class="toast__icon" id="toastIcon">!</span>
+        <span id="toastText"></span>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="loader__inner">
+          <div class="loader__mark" id="loaderMark"></div>
+          <div class="loader__eyebrow">PARKER INDUSTRIES · MOTION LAB</div>
+          <div class="loader__title">SPIDER<span>TRACK</span></div>
+          <div class="loader__bar"><b id="loaderBar"></b></div>
+          <div class="loader__status" id="loaderStatus">Calibrating suit interface</div>
+        </div>
+        <div class="loader__web" aria-hidden="true"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
