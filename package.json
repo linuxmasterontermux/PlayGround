@@ -1,0 +1,19 @@
+{
+  "name": "kinetic-motion-lab",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Real-time 3D full-body, face, hand, foot, eye and mouth tracking in the browser.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "vite build --base ./",
+    "preview": "vite preview --host 0.0.0.0 --port 3000"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.2.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
+  }
+}

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#04070c" />
+    <title>KINETIC — Real-time 3D Motion Capture</title>
+    <meta
+      name="description"
+      content="Track your full body, face, hands, feet, eyes and mouth in real time, rendered as a live 3D motion capture rig. Everything runs locally in your browser."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2305080d'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%235ff5ff' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%235ff5ff'/%3E%3Ccircle cx='32' cy='15' r='3' fill='%23ff5ecf'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <div id="stage" aria-hidden="true"></div>
+
+      <header class="topbar hud">
+        <a class="brand" href="./" aria-label="Kinetic motion lab home">
+          <span class="brand-mark" aria-hidden="true">
+            <i class="ring ring--1"></i>
+            <i class="ring ring--2"></i>
+            <i class="core"></i>
+            <i class="satellite"></i>
+          </span>
+          <span class="brand-copy">
+            <strong>KINETIC</strong>
+            <small>MOTION LAB</small>
+          </span>
+        </a>
+
+        <div class="topbar-center">
+          <span class="status-pill" id="modePill"><i></i><span>DEMO LOOP</span></span>
+          <span class="local-note"><i></i>LOCAL INFERENCE</span>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="icon-btn" id="snapshotBtn" type="button" title="Save a frame (S)" aria-label="Save a frame">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h3l1.4-2h7.2L17 7.5h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>
+          </button>
+          <button class="icon-btn" id="fullscreenBtn" type="button" title="Fullscreen (F)" aria-label="Toggle fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+          </button>
+          <button class="btn btn--primary" id="cameraBtn" type="button" data-action="camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.4-2h7.2L17 8.5h3v10H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+            <span>Start camera</span>
+            <kbd>C</kbd>
+          </button>
+        </div>
+      </header>
+
+      <aside class="panel panel--left hud" aria-label="Tracking matrix">
+        <div class="panel-head">
+          <span class="eyebrow">Tracking matrix</span>
+          <span class="micro" id="subjectState">SYNTHETIC SUBJECT</span>
+        </div>
+
+        <div class="matrix">
+          <div class="track-row" data-track="body">
+            <span class="track-dot" style="--c: var(--cyan)"></span>
+            <span class="track-name">Body</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+          <div class="track-row" data-track="face">
+            <span class="track-dot" style="--c: var(--violet)"></span>
+            <span class="track-name">Face</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+          <div class="track-row" data-track="hands">
+            <span class="track-dot" style="--c: var(--magenta)"></span>
+            <span class="track-name">Hands</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+          <div class="track-row" data-track="feet">
+            <span class="track-dot" style="--c: var(--lime)"></span>
+            <span class="track-name">Feet</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+          <div class="track-row" data-track="eyes">
+            <span class="track-dot" style="--c: var(--white)"></span>
+            <span class="track-name">Eyes</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+          <div class="track-row" data-track="mouth">
+            <span class="track-dot" style="--c: var(--pink)"></span>
+            <span class="track-name">Mouth</span>
+            <span class="track-bar"><i></i></span>
+            <span class="track-val">—</span>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="face-signals">
+          <div class="gaze">
+            <div class="gaze-pad" aria-hidden="true">
+              <i class="gaze-axis gaze-axis--x"></i>
+              <i class="gaze-axis gaze-axis--y"></i>
+              <i class="gaze-dot" id="gazeDot"></i>
+            </div>
+            <div class="gaze-meta">
+              <span class="eyebrow">Gaze vector</span>
+              <strong id="gazeValue">+0.00 / +0.00</strong>
+              <span class="micro">IRIS / 10 PTS</span>
+            </div>
+          </div>
+          <div class="mini-meters">
+            <div class="mini-meter">
+              <span>BLINK</span>
+              <div class="meter"><i id="blinkMeter"></i></div>
+              <b id="blinkValue">0%</b>
+            </div>
+            <div class="mini-meter">
+              <span>JAW</span>
+              <div class="meter"><i id="jawMeter"></i></div>
+              <b id="jawValue">0%</b>
+            </div>
+            <div class="mini-meter">
+              <span>SMILE</span>
+              <div class="meter"><i id="smileMeter"></i></div>
+              <b id="smileValue">0%</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="energy">
+          <div class="energy-head">
+            <span class="eyebrow">Motion energy</span>
+            <span class="micro" id="energyValue">0.00</span>
+          </div>
+          <canvas id="energyCanvas" width="260" height="42" aria-hidden="true"></canvas>
+        </div>
+      </aside>
+
+      <aside class="panel panel--right hud" aria-label="Scene layers and input">
+        <div class="panel-head">
+          <span class="eyebrow">Scene layers</span>
+          <span class="micro">3D / WEBGL</span>
+        </div>
+
+        <div class="layers" id="layers">
+          <button class="layer is-on" type="button" data-layer="body" aria-pressed="true">
+            <span class="layer-swatch" style="--c: var(--cyan)"></span>
+            <span class="layer-name">Body rig</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="layer is-on" type="button" data-layer="face" aria-pressed="true">
+            <span class="layer-swatch" style="--c: var(--violet)"></span>
+            <span class="layer-name">Face mesh</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="layer is-on" type="button" data-layer="hands" aria-pressed="true">
+            <span class="layer-swatch" style="--c: var(--magenta)"></span>
+            <span class="layer-name">Hands</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="layer is-on" type="button" data-layer="feet" aria-pressed="true">
+            <span class="layer-swatch" style="--c: var(--lime)"></span>
+            <span class="layer-name">Feet</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="layer is-on" type="button" data-layer="particles" aria-pressed="true">
+            <span class="layer-swatch" style="--c: var(--blue)"></span>
+            <span class="layer-name">Particles</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="layer is-on" type="button" data-layer="ground" aria-pressed="true">
+            <span class="layer-swatch" style="--c: #4d7b88"></span>
+            <span class="layer-name">Ground</span>
+            <span class="switch" aria-hidden="true"><i></i></span>
+          </button>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="panel-head">
+          <span class="eyebrow">Input</span>
+          <span class="micro" id="inputState">SIMULATED</span>
+        </div>
+        <div class="input-actions">
+          <button class="btn btn--primary btn--wide" type="button" data-action="camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.4-2h7.2L17 8.5h3v10H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+            <span>Enable camera</span>
+          </button>
+          <button class="btn btn--ghost btn--wide" type="button" id="demoBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l10-6.5z"/></svg>
+            <span>Demo loop</span>
+            <i class="btn-state">ON</i>
+          </button>
+        </div>
+        <p class="privacy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"/></svg>
+          Video never leaves this device. Pose, face and hand models run locally.
+        </p>
+
+        <div class="panel-divider"></div>
+        <div class="render-actions">
+          <button class="btn btn--tiny" type="button" id="resetBtn">Reset view</button>
+          <button class="btn btn--tiny" type="button" id="snapshotBtn2">Save frame</button>
+        </div>
+      </aside>
+
+      <div class="metrics hud" aria-label="Performance metrics">
+        <div><span>FPS</span><b id="fps">60</b></div>
+        <div><span>INFERENCE</span><b id="latency">—</b></div>
+        <div><span>TRACKED PTS</span><b id="points">553</b></div>
+        <div><span>RENDERER</span><b>WEBGL</b></div>
+      </div>
+
+      <div class="hint hud" aria-hidden="true">
+        <span><i>DRAG</i> orbit</span>
+        <span><i>SCROLL</i> zoom</span>
+        <span><i>C</i> camera</span>
+        <span><i>D</i> demo</span>
+      </div>
+
+      <div class="pip hud" id="pip" aria-label="Input preview">
+        <div class="pip-head">
+          <span><i class="rec-dot"></i><b id="pipLabel">SIM FEED</b></span>
+          <span id="pipRes">300 × 200</span>
+        </div>
+        <canvas id="pipCanvas" width="300" height="200"></canvas>
+        <div class="pip-foot">
+          <span id="pipStatus">SYNTHETIC SUBJECT</span>
+          <span id="pipFps">30 FPS</span>
+        </div>
+        <i class="corner corner--tl" aria-hidden="true"></i>
+        <i class="corner corner--tr" aria-hidden="true"></i>
+        <i class="corner corner--bl" aria-hidden="true"></i>
+        <i class="corner corner--br" aria-hidden="true"></i>
+      </div>
+
+      <div class="mobile-matrix hud" id="mobileMatrix" aria-hidden="true">
+        <span class="mm-chip" data-mm="body"><i style="--c: var(--cyan)"></i>BODY<b>—</b></span>
+        <span class="mm-chip" data-mm="face"><i style="--c: var(--violet)"></i>FACE<b>—</b></span>
+        <span class="mm-chip" data-mm="hands"><i style="--c: var(--magenta)"></i>HANDS<b>—</b></span>
+        <span class="mm-chip" data-mm="feet"><i style="--c: var(--lime)"></i>FEET<b>—</b></span>
+        <span class="mm-chip" data-mm="eyes"><i style="--c: var(--white)"></i>EYES<b>—</b></span>
+        <span class="mm-chip" data-mm="mouth"><i style="--c: var(--pink)"></i>MOUTH<b>—</b></span>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="loader" id="loader" aria-live="polite">
+        <div class="loader-inner">
+          <div class="loader-mark" aria-hidden="true">
+            <i class="ring ring--1"></i>
+            <i class="ring ring--2"></i>
+            <i class="core"></i>
+            <i class="satellite"></i>
+          </div>
+          <div class="loader-title">KINETIC</div>
+          <div class="loader-sub" id="loaderLabel">Calibrating studio</div>
+          <div class="loader-track"><i id="loaderBar"></i></div>
+          <div class="loader-pct" id="loaderPct">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
